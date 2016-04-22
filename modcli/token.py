@@ -30,7 +30,7 @@ def get_token(args):
         'user_id': args.user_id,
         'agent': get_agent_info(),
     }
-    message = json.dumps({'message': encrypt_and_encode(settings.MOD_API_KEY_PATH, json.dumps(data)).decode()})
+    message = json.dumps({'message': encrypt_and_encode(settings.API_KEY_PATH, json.dumps(data)).decode()})
     req = request.urlopen('{0}/users/tokens'.format(settings.API_BASE_URL), message.encode())
     token_message = req.read().decode()
     token = decode_and_decrypt(os.path.expanduser(args.ssh_key_file), json.loads(token_message)['message'])
@@ -46,7 +46,6 @@ def main():
     parser.add_argument('user_id', help='The user id')
 
     args = parser.parse_args()
-    print(args)
     if args.password:
         logging.error('argument --password is not yet supported')
         exit(1)
