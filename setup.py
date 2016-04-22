@@ -8,6 +8,10 @@ setup(
     author='Alexandre Cunha',
     author_email='alex@moddevices.com',
     license='Proprietary',
+    include_package_data=True,
+    package_data={
+        'modcli': ['mod_api_key.pub'],
+    },
     packages=[
         'modcli',
     ],
@@ -28,6 +32,5 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
     ],
-    include_package_data=True,
     url='http://moddevices.com/',
 )
