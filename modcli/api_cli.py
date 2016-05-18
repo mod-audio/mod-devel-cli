@@ -5,7 +5,7 @@ import sys
 from urllib import request
 from urllib.error import HTTPError
 
-from modcli import settings, token
+from modcli import settings, token_cli
 
 _MOD_HOME = os.path.expanduser('~/.mod')
 
@@ -32,7 +32,7 @@ def register(args):
 
 
 def init(user_id, password):
-    access_token = token.get_token_password(user_id, password)
+    access_token = token_cli.get_token_password(user_id, password)
     os.makedirs(_MOD_HOME, exist_ok=True)
     with open(os.path.join(_MOD_HOME, 'config'), 'w') as f:
         f.write(json.dumps({'user_id': user_id}, sort_keys=True, indent=4))

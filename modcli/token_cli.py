@@ -5,7 +5,8 @@ import os
 import sys
 from urllib import request
 
-from modcli import settings, crypt, get_agent_info
+from modauth import crypt
+from modcli import settings, get_agent_info
 
 
 def encrypt_and_encode(public_key: str, data: str):
