@@ -16,14 +16,14 @@ setup(
         'modcli',
     ],
     install_requires=[
-        'mod-auth==1.0.0',
+        'pycrypto==2.7a1',
     ],
     dependency_links=[
+        'http://github.com/dlitz/pycrypto/tarball/v2.7a1#egg=pycrypto-2.7a1',
     ],
     entry_points={
         'console_scripts': [
-            'mod-token = modcli.token_cli:main',
-            'mod-api = modcli.api_cli:main',
+            'mod-token = modcli.token:main',
         ]
     },
     classifiers=[
