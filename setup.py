@@ -2,7 +2,7 @@ from setuptools import setup
 from modcli import __version__
 
 setup(
-    name='mod-cli',
+    name='mod-devel-cli',
     version=__version__,
     description='MOD Command Line Interface',
     author='Alexandre Cunha',
