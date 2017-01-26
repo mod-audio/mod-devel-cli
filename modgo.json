@@ -1,0 +1,5 @@
+{
+  "build": {
+    "dependency_links": ["https://github.com/dlitz/pycrypto/tarball/v2.7a1#egg=pycrypto-2.7a1"]
+  }
+}
