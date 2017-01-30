@@ -7,6 +7,10 @@ from urllib import request
 
 from modcli import settings, crypt, get_agent_info
 
+ENV_DEV = 'dev'
+ENV_PROD = 'prod'
+_api_map = {ENV_DEV: settings.DEV_API_BASE_URL, ENV_PROD: settings.API_BASE_URL}
+
 
 def encrypt_and_encode(public_key: str, data: str):
     with open(public_key, 'r') as fh:
@@ -22,8 +26,11 @@ def decode_and_decrypt(private_key: str, data: str):
     return crypt.decrypt(device_key_text, encrypted)
 
 
-def get_token(user_data: dict):
-    req = request.urlopen('{0}/users/nonce'.format(settings.API_BASE_URL))
+def get_token(user_data: dict, env: str='prod'):
+    if env.lower() not in _api_map:
+        raise Exception('Unknown env: {0}'.format(env))
+    base_url = _api_map[env.lower()]
+    req = request.urlopen('{0}/users/nonce'.format(base_url))
     nonce = json.loads(req.read().decode())['nonce']
     data = {
         'nonce': nonce,
@@ -31,7 +38,7 @@ def get_token(user_data: dict):
     }
     data.update(user_data)
     message = json.dumps({'message': encrypt_and_encode(settings.API_KEY_PATH, json.dumps(data)).decode()})
-    req = request.urlopen('{0}/users/tokens'.format(settings.API_BASE_URL), message.encode())
+    req = request.urlopen('{0}/users/tokens'.format(base_url), message.encode())
     token_message = req.read().decode()
     return json.loads(token_message)['message']
 
@@ -46,6 +53,7 @@ def main():
     group.add_argument('--ssh-key', help='Uses ssh key .pem file instead of a password', action='store_true')
     group.add_argument('--password', help='User password')
     parser.add_argument('--ssh-key-file', help='A ssh key .pem file (default: ~/.ssh/id_rsa)')
+    parser.add_argument('--env', help=argparse.SUPPRESS, default='prod')
     parser.add_argument('user_id', help='The user id')
 
     if len(sys.argv) == 1:
@@ -58,7 +66,7 @@ def main():
     else:
         if args.ssh_key and not args.ssh_key_file:
             args.ssh_key_file = '~/.ssh/id_rsa'
-        token = decode_and_decrypt(os.path.expanduser(args.ssh_key_file), get_token({'user_id': args.user_id}))
+        token = decode_and_decrypt(os.path.expanduser(args.ssh_key_file), get_token({'user_id': args.user_id}, args.env))
 
     print(token)
     exit(0)
