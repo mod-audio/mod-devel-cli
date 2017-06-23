@@ -7,9 +7,7 @@ from urllib import request
 
 from modcli import settings, crypt, get_agent_info
 
-ENV_DEV = 'dev'
-ENV_PROD = 'prod'
-_api_map = {ENV_DEV: settings.DEV_API_BASE_URL, ENV_PROD: settings.API_BASE_URL}
+_api_map = {'dev': settings.DEV_API_BASE_URL, 'prod': settings.API_BASE_URL}
 
 
 def encrypt_and_encode(public_key: str, data: str):
