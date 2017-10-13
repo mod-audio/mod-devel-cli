@@ -1,29 +1,28 @@
+import re
+
 from setuptools import setup
-from modcli import __version__
+
+with open('modcli/__init__.py', 'r') as fh:
+    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', fh.read(), re.MULTILINE).group(1)
 
 setup(
     name='mod-devel-cli',
-    version=__version__,
+    version=version,
     description='MOD Command Line Interface',
     author='Alexandre Cunha',
     author_email='alex@moddevices.com',
     license='Proprietary',
-    include_package_data=True,
-    package_data={
-        'modcli': ['mod_api_key.pub'],
-    },
+    install_requires=[
+        'click==6.7',
+        'crayons==0.1.2',
+        'requests==2.18.4',
+    ],
     packages=[
         'modcli',
     ],
-    install_requires=[
-        'pycrypto==2.7a1',
-    ],
-    dependency_links=[
-        'https://github.com/dlitz/pycrypto/tarball/v2.7a1#egg=pycrypto-2.7a1',
-    ],
     entry_points={
         'console_scripts': [
-            'mod-token = modcli.token:main',
+            'modcli = modcli.cli:main',
         ]
     },
     classifiers=[
