@@ -1,12 +1,17 @@
 import re
+import sys
 
 from setuptools import setup
 
 with open('modcli/__init__.py', 'r') as fh:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', fh.read(), re.MULTILINE).group(1)
 
+if sys.version_info[0] < 3:
+    raise Exception("Must be using Python 3")
+
 setup(
     name='mod-devel-cli',
+    python_requires='>=3',
     version=version,
     description='MOD Command Line Interface',
     author='Alexandre Cunha',
