@@ -33,7 +33,7 @@ def login(username: str, show_token: bool):
     if result.status_code != 200:
         click.echo(crayons.red('Error: {0}'.format(result.json()['error-message'])))
         exit(1)
-    token = result.json()['message']
+    token = result.json()['message'].strip()
     config.save_token(token)
     click.echo(crayons.green('You\'re now logged in as [{0}].'.format(username)))
     if show_token:
