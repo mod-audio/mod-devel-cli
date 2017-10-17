@@ -20,7 +20,7 @@ def auth():
     pass
 
 
-@click.command()
+@click.command(help='Authenticate user')
 @click.option('-u', '--username', type=str, prompt=True, help='User ID')
 @click.option('-s', '--show_token', type=bool, help='Print the JWT token obtained', is_flag=True)
 def login(username: str, show_token: bool):
@@ -40,7 +40,7 @@ def login(username: str, show_token: bool):
         click.echo('Token: {0}'.format(token))
 
 
-@click.command()
+@click.command(help='Show current active access JWT token')
 def active_token():
     token = config.read_token()
     if not token:
