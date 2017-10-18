@@ -31,7 +31,7 @@ def login(username: str, show_token: bool):
         'agent': 'modcli:{0}'.format(__version__),
     })
     if result.status_code != 200:
-        click.echo(crayons.red('Error: {0}'.format(result.json()['error-message'])))
+        click.echo(crayons.red('Error: {0}'.format(result.json()['error-message'])), err=True)
         exit(1)
     token = result.json()['message'].strip()
     config.save_token(token)
@@ -44,7 +44,7 @@ def login(username: str, show_token: bool):
 def active_token():
     token = config.read_token()
     if not token:
-        click.echo(crayons.red('You must authenticate first.'))
+        click.echo(crayons.red('You must authenticate first.'), err=True)
         click.echo('Try:\n $ modcli auth login')
         exit(1)
     click.echo(token)
