@@ -11,6 +11,8 @@ def _get_config_dir():
 
 
 def save_token(token: str):
+    if os.path.isfile(settings.TOKEN_PATH):
+        os.remove(settings.TOKEN_PATH)
     with os.fdopen(os.open(settings.TOKEN_PATH, os.O_WRONLY | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR), 'w') as fh:
         fh.write(token)
         fh.write(os.linesep)
