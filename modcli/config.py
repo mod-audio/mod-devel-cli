@@ -23,6 +23,7 @@ def save_token(token: str, username: str):
         'token_path': settings.TOKEN_PATH,
         'username': username,
         'created': str(datetime.utcnow()),
+        'remote': settings.API_URL,
     }
     with os.fdopen(os.open(settings.INFO_PATH, os.O_WRONLY | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR), 'w') as fh:
         fh.write(json.dumps(data))
