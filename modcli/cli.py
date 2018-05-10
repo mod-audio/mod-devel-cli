@@ -22,9 +22,9 @@ def auth():
 
 @click.command(help='Authenticate user')
 @click.option('-u', '--username', type=str, prompt=True, help='User ID')
+@click.option('-p', '--password', type=str, prompt=True, hide_input=True, help='User password')
 @click.option('-s', '--show_token', type=bool, help='Print the JWT token obtained', is_flag=True)
-def login(username: str, show_token: bool):
-    password = click.prompt('Password', type=str, hide_input=True)
+def login(username: str, password: str, show_token: bool):
     result = requests.post(_api_url('/users/tokens'), json={
         'user_id': username,
         'password': password,
