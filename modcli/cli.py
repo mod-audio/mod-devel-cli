@@ -34,7 +34,7 @@ def login(username: str, password: str, show_token: bool):
         click.echo(crayons.red('Error: {0}'.format(result.json()['error-message'])), err=True)
         exit(1)
     token = result.json()['message'].strip()
-    config.save_token(token)
+    config.save_token(token, username)
     click.echo(crayons.green('You\'re now logged in as [{0}].'.format(username)))
     if show_token:
         click.echo('Token: {0}'.format(token))
