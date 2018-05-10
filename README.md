@@ -4,7 +4,7 @@
 
 Run:
 
-    pip install git+https://github.com/mod-devel-cli.git
+    pip3 install git+https://github.com/moddevices/mod-devel-cli
     
 ## Usage
 
