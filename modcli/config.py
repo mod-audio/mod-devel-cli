@@ -12,7 +12,7 @@ def _get_config_dir():
     return settings.CONFIG_DIR
 
 
-def save_token(token: str, username: str):
+def save_token(token: str, username: str, api_url: str):
     for path in [settings.TOKEN_PATH, settings.INFO_PATH]:
         if os.path.isfile(path):
             os.remove(path)
@@ -23,7 +23,7 @@ def save_token(token: str, username: str):
         'token_path': settings.TOKEN_PATH,
         'username': username,
         'created': str(datetime.utcnow()),
-        'remote': settings.API_URL,
+        'remote': api_url,
     }
     with os.fdopen(os.open(settings.INFO_PATH, os.O_WRONLY | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR), 'w') as fh:
         fh.write(json.dumps(data))

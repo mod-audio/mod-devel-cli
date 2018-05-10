@@ -1,12 +1,15 @@
 import click
 import crayons
 import requests
+import re
 
 from modcli import settings, config, __version__
 
 
-def _api_url(path: str):
-    return '{0}/{1}'.format(settings.API_URL, path.lstrip('/'))
+def get_url(api_url: str, path: str):
+    if not re.match('https?://.*', api_url):
+        raise Exception('Invalid api_url: {0}'.format(api_url))
+    return '{0}/{1}'.format(api_url.rstrip('/'), path.lstrip('/'))
 
 
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
@@ -23,10 +26,12 @@ def auth():
 @click.command(help='Authenticate user')
 @click.option('-u', '--username', type=str, prompt=True, help='User ID')
 @click.option('-p', '--password', type=str, prompt=True, hide_input=True, help='User password')
-@click.option('-s', '--show_token', type=bool, help='Print the JWT token obtained', is_flag=True)
-@click.option('-o', '--one_time', type=bool, help='Only print token once (do not store it)', is_flag=True)
-def login(username: str, password: str, show_token: bool, one_time: bool):
-    result = requests.post(_api_url('/users/tokens'), json={
+@click.option('-s', '--show-token', type=bool, help='Print the JWT token obtained', is_flag=True)
+@click.option('-o', '--one-time', type=bool, help='Only print token once (do not store it)', is_flag=True)
+@click.option('--api-url', type=str, help='MOD API Url (i.e. https://api.moddevices.com/v2/')
+def login(username: str, password: str, show_token: bool, one_time: bool, api_url: str):
+    api_url = api_url or settings.API_URL
+    result = requests.post(get_url(api_url, '/users/tokens'), json={
         'user_id': username,
         'password': password,
         'agent': 'modcli:{0}'.format(__version__),
@@ -37,7 +42,7 @@ def login(username: str, password: str, show_token: bool, one_time: bool):
     token = result.json()['message'].strip()
 
     if not one_time:
-        config.save_token(token, username)
+        config.save_token(token, username, api_url)
 
     if show_token or one_time:
         print(token.strip())
