@@ -1,15 +1,11 @@
+import webbrowser
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
 import click
 import crayons
 import requests
-import re
 
-from modcli import settings, config, __version__
-
-
-def get_url(api_url: str, path: str):
-    if not re.match('https?://.*', api_url):
-        raise Exception('Invalid api_url: {0}'.format(api_url))
-    return '{0}/{1}'.format(api_url.rstrip('/'), path.lstrip('/'))
+from modcli import context, __version__
 
 
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
@@ -26,26 +22,59 @@ def auth():
 @click.command(help='Authenticate user with SSO (MOD Forum)')
 @click.option('-s', '--show-token', type=bool, help='Print the JWT token obtained', is_flag=True)
 @click.option('-o', '--one-time', type=bool, help='Only print token once (do not store it)', is_flag=True)
-@click.option('-e', '--environment', type=click.Choice(['prod', 'labs', 'dev']), default='prod', help='MOD API Environment')
+@click.option('-e', '--environment', default='labs')
 def login_sso(show_token: bool, one_time: bool, environment: str):
-    api_url = settings.API_URLS[environment]
-    result = requests.post(get_url(api_url, '/users/tokens_sso'), json={
-        'agent': 'modcli:{0}'.format(__version__),
-    })
-    if result.status_code != 200:
-        click.echo(crayons.red('Error: {0}'.format(result.json()['error-message'])), err=True)
-        exit(1)
-    token = result.json()['message'].strip()
+    api_url = context.environments[environment].url
+
+    server_host = 'localhost'
+    server_port = 8099
+    local_server = 'http://{0}:{1}'.format(server_host, server_port)
+
+    class SSORequestHandler(BaseHTTPRequestHandler):
+        token = ''
+
+        def do_HEAD(self):
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+
+        def do_GET(self):
+            response = self.handle_http(200)
+            SSORequestHandler.token = '123'
+            self.wfile.write(response)
+
+        def handle_http(self, status_code):
+            self.send_response(status_code)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            content = '''
+            <html><head><title>Success</title></head>
+            <body>Authentication successful!</body></html>
+            '''
+            return bytes(content, 'UTF-8')
+
+    httpd = HTTPServer((server_host, server_port), SSORequestHandler)
+    httpd.timeout = 60
+
+    webbrowser.open('{0}/users/tokens_sso?local_url={1}'.format(api_url, local_server))
+
+    try:
+        httpd.handle_request()
+    except KeyboardInterrupt:
+        pass
+
+    token = SSORequestHandler.token
     _, payload, _ = token.split('.')
     username = payload['user_id']
 
     if not one_time:
-        config.save_token(token, username, api_url, environment)
+        context.set_token(environment, username, token)
+        context.set_active_env(environment)
 
     if show_token or one_time:
         print(token.strip())
     else:
-        click.echo(crayons.green('You\'re now logged in as [{0}].'.format(username)))
+        click.echo(crayons.green('You\'re now logged in as [{0}] in [{1}].'.format(username, environment)))
 
 
 @click.command(help='Authenticate user')
@@ -53,10 +82,10 @@ def login_sso(show_token: bool, one_time: bool, environment: str):
 @click.option('-p', '--password', type=str, prompt=True, hide_input=True, help='User password')
 @click.option('-s', '--show-token', type=bool, help='Print the JWT token obtained', is_flag=True)
 @click.option('-o', '--one-time', type=bool, help='Only print token once (do not store it)', is_flag=True)
-@click.option('-e', '--environment', type=click.Choice(['prod', 'labs', 'dev']), default='prod', help='MOD API Environment')
+@click.option('-e', '--environment', default='labs')
 def login(username: str, password: str, show_token: bool, one_time: bool, environment: str):
-    api_url = settings.API_URLS[environment]
-    result = requests.post(get_url(api_url, '/users/tokens'), json={
+    api_url = context.environments[environment].url
+    result = requests.post('{0}/users/tokens'.format(api_url), json={
         'user_id': username,
         'password': password,
         'agent': 'modcli:{0}'.format(__version__),
@@ -67,18 +96,18 @@ def login(username: str, password: str, show_token: bool, one_time: bool, enviro
     token = result.json()['message'].strip()
 
     if not one_time:
-        config.save_token(token, username, api_url, environment)
+        context.set_token(environment, username, token)
+        context.set_active_env(environment)
 
     if show_token or one_time:
         print(token.strip())
     else:
-        click.echo(crayons.green('You\'re now logged in as [{0}].'.format(username)))
+        click.echo(crayons.green('You\'re now logged in as [{0}] in [{1}].'.format(username, environment)))
 
 
 @click.command(help='Show current active access JWT token')
-@click.option('-e', '--environment', type=click.Choice(['prod', 'labs', 'dev']), default=None, help='MOD API Environment')
-def active_token(environment: str):
-    token = config.read_token(environment)
+def active_token():
+    token = context.active_token()
     if not token:
         click.echo(crayons.red('You must authenticate first.'), err=True)
         click.echo('Try:\n $ modcli auth login')
@@ -87,7 +116,8 @@ def active_token(environment: str):
 
 
 auth.add_command(login)
-auth.add_command(active_token)
+auth.add_command(login_sso)
+main.add_command(active_token)
 main.add_command(auth)
 
 
