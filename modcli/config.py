@@ -18,7 +18,11 @@ def read_context():
     return context
 
 
-def _write_json_file(path: str, data: dict, remove_existing: bool=True):
+def clear_context():
+    CliContext.clear(settings.CONFIG_DIR)
+
+
+def _write_file(path: str, data: str, remove_existing: bool=True):
     # create dir if doesn't exist
     dirname = os.path.dirname(path)
     if not os.path.isdir(dirname):
@@ -29,7 +33,7 @@ def _write_json_file(path: str, data: dict, remove_existing: bool=True):
             os.remove(path)
     # write json file
     with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR), 'w') as fh:
-        fh.write(json.dumps(data, indent=4))
+        fh.write(data)
         fh.writelines(os.linesep)
 
 
@@ -41,8 +45,18 @@ def _read_json_file(path: str):
     return json.loads(contents)
 
 
+def _write_json_file(path: str, data: dict, remove_existing: bool=True):
+    _write_file(path, json.dumps(data, indent=4), remove_existing)
+
+
+def _remove_file(path: str):
+    if os.path.isfile(path):
+        os.remove(path)
+
+
 class CliContext(object):
     _filename = 'context.json'
+    _access_token_filename = 'access_token'
 
     @staticmethod
     def read(path: str):
@@ -109,6 +123,15 @@ class CliContext(object):
             } for e in self.environments.values())
         }
         _write_json_file(os.path.join(self._path, CliContext._filename), data)
+        active_token = self.active_token()
+        if active_token:
+            _write_file(os.path.join(self._path, CliContext._access_token_filename), active_token)
+        else:
+            _remove_file(os.path.join(self._path, CliContext._access_token_filename))
+
+    def clear(self):
+        _remove_file(os.path.join(self._path, CliContext._filename))
+        _remove_file(os.path.join(self._path, CliContext._access_token_filename))
 
 
 class EnvSettings(object):

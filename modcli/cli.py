@@ -3,6 +3,9 @@ import crayons
 
 from modcli import context, auth, __version__
 
+_sso_disclaimer = '''SSO login requires you have a valid account in MOD Forum (https://forum.moddevices.com).
+If your browser has an active session the credentials will be used for this login. Confirm?'''
+
 
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
 @click.version_option(prog_name='modcli', version=__version__)
@@ -10,7 +13,7 @@ def main():
     pass
 
 
-@click.group(name='auth', help='Authentication')
+@click.group(name='auth', help='Authentication commands')
 def auth_group():
     pass
 
@@ -18,8 +21,13 @@ def auth_group():
 @click.command(help='Authenticate user with SSO (MOD Forum)')
 @click.option('-s', '--show-token', type=bool, help='Print the JWT token obtained', is_flag=True)
 @click.option('-o', '--one-time', type=bool, help='Only print token once (do not store it)', is_flag=True)
-def login_sso(show_token: bool, one_time: bool):
+@click.option('-y', '--confirm-all', type=bool, help='Confirm all operations', is_flag=True)
+def login_sso(show_token: bool, one_time: bool, confirm_all: bool):
     env = context.current_env()
+    if not confirm_all:
+        response = click.confirm(_sso_disclaimer)
+        if not response:
+            exit(1)
     click.echo('Logging in to [{0}]...'.format(env.name))
 
     try:
@@ -62,6 +70,17 @@ def login(username: str, password: str, show_token: bool, one_time: bool):
         print(token.strip())
     else:
         click.echo(crayons.green('You\'re now logged in as [{0}] in [{1}].'.format(username, env.name)))
+
+
+@click.command(help='Remove all tokens and reset context data')
+def clear_context():
+    try:
+        context.clear()
+    except Exception as ex:
+        click.echo(crayons.red(str(ex)), err=True)
+        exit(1)
+        return
+    click.echo(crayons.green('Context cleared'))
 
 
 @click.command(help='Show current active access JWT token')
@@ -114,13 +133,14 @@ def status():
     click.echo('Registered environments: {0}'.format(list(context.environments.keys())))
 
 
+auth_group.add_command(active_token)
 auth_group.add_command(login)
 auth_group.add_command(login_sso)
-main.add_command(add_env)
-main.add_command(active_token)
 main.add_command(auth_group)
+main.add_command(add_env)
 main.add_command(set_active_env)
 main.add_command(status)
+main.add_command(clear_context)
 
 
 if __name__ == '__main__':
