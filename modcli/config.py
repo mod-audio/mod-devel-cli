@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 import stat
@@ -28,7 +29,7 @@ def _write_json_file(path: str, data: dict, remove_existing: bool=True):
             os.remove(path)
     # write json file
     with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR), 'w') as fh:
-        fh.write(json.dumps(data))
+        fh.write(json.dumps(data, indent=4))
         fh.writelines(os.linesep)
 
 
@@ -49,9 +50,12 @@ class CliContext(object):
         data = _read_json_file(os.path.join(path, CliContext._filename))
         if not data:
             return context
-        for env in data['environments']:
-            context.add_env(env['name'], env['url'])
-            context.set_token(env['name'], env['username'], env['token'])
+        for env_data in data['environments']:
+            context.add_env(env_data['name'], env_data['url'])
+            env = context.environments[env_data['name']]
+            env.username = env_data['username']
+            env.token = env_data['token']
+            env.exp = env_data['exp']
         context.set_active_env(data['active_env'])
         return context
 
@@ -85,13 +89,13 @@ class CliContext(object):
         self._ensure_env(env_name)
         del self.environments[env_name]
 
-    def set_token(self, env_name: str, username: str, token: str):
-        self._ensure_env(env_name)
-        self.environments[env_name].username = username
-        self.environments[env_name].token = token
-
     def active_token(self):
-        return self.environments[self._active_env].token
+        return self.current_env().token
+
+    def current_env(self):
+        if not self._active_env:
+            raise Exception('Not environment has been set')
+        return self.environments[self._active_env]
 
     def save(self):
         data = {
@@ -101,6 +105,7 @@ class CliContext(object):
                 'url': e.url,
                 'username': e.username,
                 'token': e.token,
+                'exp': e.exp,
             } for e in self.environments.values())
         }
         _write_json_file(os.path.join(self._path, CliContext._filename), data)
@@ -113,3 +118,14 @@ class EnvSettings(object):
         self.url = url.rstrip('/')
         self.username = ''
         self.token = ''
+        self.exp = ''
+
+    def set_token(self, token: str):
+        _, payload, _ = token.split('.')
+        payload_data = json.loads(base64.b64decode(payload + '==='))
+        username = payload_data['user_id']
+        exp = payload_data.get('exp', None)
+
+        self.username = username
+        self.token = token
+        self.exp = exp
