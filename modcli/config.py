@@ -6,13 +6,14 @@ import stat
 import re
 
 from modcli import settings
+from modcli.utils import read_json_file
 
 
 def read_context():
     context = CliContext.read(settings.CONFIG_DIR)
     if len(context.environments) == 0:
-        for env_name, url in settings.API_URLS.items():
-            context.add_env(env_name, url)
+        for env_name, urls in settings.URLS.items():
+            context.add_env(env_name, urls[0], urls[1])
         context.set_active_env(settings.DEFAULT_ENV)
         context.save()
     return context
@@ -37,14 +38,6 @@ def _write_file(path: str, data: str, remove_existing: bool=True):
         fh.writelines(os.linesep)
 
 
-def _read_json_file(path: str):
-    if not os.path.isfile(path):
-        return {}
-    with open(path, 'r') as file:
-        contents = file.read()
-    return json.loads(contents)
-
-
 def _write_json_file(path: str, data: dict, remove_existing: bool=True):
     _write_file(path, json.dumps(data, indent=4), remove_existing)
 
@@ -61,11 +54,11 @@ class CliContext(object):
     @staticmethod
     def read(path: str):
         context = CliContext(path)
-        data = _read_json_file(os.path.join(path, CliContext._filename))
+        data = read_json_file(os.path.join(path, CliContext._filename))
         if not data:
             return context
         for env_data in data['environments']:
-            context.add_env(env_data['name'], env_data['url'])
+            context.add_env(env_data['name'], env_data['api_url'], env_data['bundle_url'])
             env = context.environments[env_data['name']]
             env.username = env_data['username']
             env.token = env_data['token']
@@ -89,15 +82,17 @@ class CliContext(object):
             self._ensure_env(env_name)
             self._active_env = env_name
 
-    def add_env(self, env_name: str, url: str):
+    def add_env(self, env_name: str, api_url: str, bundle_url: str):
         if not env_name:
             raise Exception('Environment name is invalid')
         if env_name in self.environments:
             raise Exception('Environment {0} already exists'.format(env_name))
-        if not re.match('https?://.*', url):
-            raise Exception('Invalid api_url: {0}'.format(url))
+        if not re.match('https?://.*', api_url):
+            raise Exception('Invalid api_url: {0}'.format(api_url))
+        if not re.match('https?://.*', bundle_url):
+            raise Exception('Invalid api_url: {0}'.format(bundle_url))
 
-        self.environments[env_name] = EnvSettings(env_name, url)
+        self.environments[env_name] = EnvSettings(env_name, api_url, bundle_url)
 
     def remove_env(self, env_name: str):
         self._ensure_env(env_name)
@@ -116,7 +111,8 @@ class CliContext(object):
             'active_env': self._active_env,
             'environments': list({
                 'name': e.name,
-                'url': e.url,
+                'api_url': e.api_url,
+                'bundle_url': e.bundle_url,
                 'username': e.username,
                 'token': e.token,
                 'exp': e.exp,
@@ -136,16 +132,17 @@ class CliContext(object):
 
 class EnvSettings(object):
 
-    def __init__(self, name: str, url: str):
+    def __init__(self, name: str, api_url: str, bundle_url: str):
         self.name = name
-        self.url = url.rstrip('/')
+        self.api_url = api_url.rstrip('/')
+        self.bundle_url = bundle_url.rstrip('/')
         self.username = ''
         self.token = ''
         self.exp = ''
 
     def set_token(self, token: str):
         _, payload, _ = token.split('.')
-        payload_data = json.loads(base64.b64decode(payload + '==='))
+        payload_data = json.loads(base64.b64decode(payload + '===').decode())
         username = payload_data['user_id']
         exp = payload_data.get('exp', None)
 

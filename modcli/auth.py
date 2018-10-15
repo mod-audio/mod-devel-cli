@@ -8,8 +8,8 @@ import requests
 from modcli import __version__
 
 
-def login(username: str, password: str, url: str):
-    result = requests.post('{0}/users/tokens'.format(url), json={
+def login(username: str, password: str, api_url: str):
+    result = requests.post('{0}/users/tokens'.format(api_url), json={
         'user_id': username,
         'password': password,
         'agent': 'modcli:{0}'.format(__version__),
@@ -28,7 +28,7 @@ def get_open_port():
     return port
 
 
-def login_sso(url: str):
+def login_sso(api_url: str):
     server_host = 'localhost'
     server_port = get_open_port()
     local_server = 'http://{0}:{1}'.format(server_host, server_port)
@@ -65,7 +65,7 @@ def login_sso(url: str):
     httpd = HTTPServer((server_host, server_port), SSORequestHandler)
     httpd.timeout = 30
 
-    webbrowser.open('{0}/users/tokens_sso?local_url={1}'.format(url, local_server))
+    webbrowser.open('{0}/users/tokens_sso?local_url={1}'.format(api_url, local_server))
 
     try:
         httpd.handle_request()
