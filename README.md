@@ -9,12 +9,16 @@ Run:
 ## Usage
 
 ```
-Usage: modcli auth [OPTIONS] COMMAND [ARGS]...
+Usage: modcli [OPTIONS] COMMAND [ARGS]...
 
 Options:
+  --version   Show the version and exit.
   -h, --help  Show this message and exit.
 
 Commands:
-  active_token  Show current active access JWT token
-  login         Authenticate user
+  add_env         Add new environment
+  auth            Authentication commands
+  clear_context   Remove all tokens and reset context data
+  set_active_env  Set active environment
+  status          Display context status
 ```
