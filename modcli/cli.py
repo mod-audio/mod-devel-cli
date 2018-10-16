@@ -1,7 +1,7 @@
 import click
 import crayons
 
-from modcli import context, auth, __version__
+from modcli import context, auth, __version__, bundle
 
 _sso_disclaimer = '''SSO login requires you have a valid account in MOD Forum (https://forum.moddevices.com).
 If your browser has an active session the credentials will be used for this login. Confirm?'''
@@ -18,6 +18,11 @@ def auth_group():
     pass
 
 
+@click.group(name='bundle', help='LV2 bundle commands')
+def bundle_group():
+    pass
+
+
 @click.command(help='Authenticate user with SSO (MOD Forum)')
 @click.option('-s', '--show-token', type=bool, help='Print the JWT token obtained', is_flag=True)
 @click.option('-o', '--one-time', type=bool, help='Only print token once (do not store it)', is_flag=True)
@@ -31,7 +36,7 @@ def login_sso(show_token: bool, one_time: bool, confirm_all: bool):
     click.echo('Logging in to [{0}]...'.format(env.name))
 
     try:
-        token = auth.login_sso(env.url)
+        token = auth.login_sso(env.api_url)
     except Exception as ex:
         click.echo(crayons.red(str(ex)), err=True)
         exit(1)
@@ -56,7 +61,7 @@ def login(username: str, password: str, show_token: bool, one_time: bool):
     env = context.current_env()
     click.echo('Logging in to [{0}]...'.format(env.name))
     try:
-        token = auth.login(username, password, env.url)
+        token = auth.login(username, password, env.api_url)
     except Exception as ex:
         click.echo(crayons.red(str(ex)), err=True)
         exit(1)
@@ -95,34 +100,36 @@ def active_token():
     click.echo(token)
 
 
-@click.command(help='Set active environment')
-@click.argument('environment')
-def set_active_env(environment: str):
+@click.command(help='Set active environment, where ENV_NAME is the name')
+@click.argument('env_name')
+def set_active_env(env_name: str):
     try:
-        context.set_active_env(environment)
+        context.set_active_env(env_name)
         context.save()
     except Exception as ex:
         click.echo(crayons.red(str(ex)), err=True)
         exit(1)
         return
 
-    click.echo(crayons.green('Current environment set to: {0}'.format(environment)))
+    click.echo(crayons.green('Current environment set to: {0}'.format(env_name)))
 
 
-@click.command(help='Add new environment')
-@click.argument('name')
-@click.argument('url')
-def add_env(name: str, url: str):
+@click.command(help='Add new environment, where ENV_NAME is the name, API_URL '
+                    'and BUNDLE_URL are the API entry points')
+@click.argument('env_name')
+@click.argument('api_url')
+@click.argument('bundle_url')
+def add_env(env_name: str, api_url: str, bundle_url: str):
     try:
-        context.add_env(name, url)
-        context.set_active_env(name)
+        context.add_env(env_name, api_url, bundle_url)
+        context.set_active_env(env_name)
         context.save()
     except Exception as ex:
         click.echo(crayons.red(str(ex)), err=True)
         exit(1)
         return
 
-    click.echo(crayons.green('Environment [{0}] added and set as active'.format(name)))
+    click.echo(crayons.green('Environment [{0}] added and set as active'.format(env_name)))
 
 
 @click.command(help='Display context status')
@@ -133,10 +140,25 @@ def status():
     click.echo('Registered environments: {0}'.format(list(context.environments.keys())))
 
 
+@click.command(help='Publish LV2 bundles, where PROJECT_FILE points to the buildroot project descriptor file (JSON)')
+@click.argument('project_file')
+@click.option('-p', '--packages_path', type=str, help='Path to buildroot package')
+def publish(project_file: str, packages_path: str):
+    try:
+        env = context.current_env()
+        bundle.publish(project_file, packages_path, env.bundle_url)
+    except Exception as ex:
+        click.echo(crayons.red(str(ex)), err=True)
+        exit(1)
+        return
+
+
 auth_group.add_command(active_token)
 auth_group.add_command(login)
 auth_group.add_command(login_sso)
+bundle_group.add_command(publish)
 main.add_command(auth_group)
+main.add_command(bundle_group)
 main.add_command(add_env)
 main.add_command(set_active_env)
 main.add_command(status)
