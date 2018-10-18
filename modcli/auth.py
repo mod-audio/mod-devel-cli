@@ -30,9 +30,9 @@ def get_open_port():
     return port
 
 
-def login_sso_dettached(url: str):
+def login_sso_dettached(api_url: str):
     click.echo('Running in dettached mode...')
-    click.echo('1) Open this url in any browser: {0}'.format('{0}/users/tokens_sso'.format(url)))
+    click.echo('1) Open this url in any browser: {0}'.format('{0}/users/tokens_sso'.format(api_url)))
     click.echo('2) The URL will automatically redirect to MOD Forum (https://forum.moddevices.com)')
     click.echo('3) Once MOD Forum page loads, if asked, enter your credentials or register a new user')
     click.echo('4) A JWT token will be displayed in your browser')
