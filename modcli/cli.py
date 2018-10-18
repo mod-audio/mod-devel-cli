@@ -27,7 +27,8 @@ def bundle_group():
 @click.option('-s', '--show-token', type=bool, help='Print the JWT token obtained', is_flag=True)
 @click.option('-o', '--one-time', type=bool, help='Only print token once (do not store it)', is_flag=True)
 @click.option('-y', '--confirm-all', type=bool, help='Confirm all operations', is_flag=True)
-def login_sso(show_token: bool, one_time: bool, confirm_all: bool):
+@click.option('-d', '--dettached-mode', type=bool, help='Run process without opening a local browser', is_flag=True)
+def login_sso(show_token: bool, one_time: bool, confirm_all: bool, dettached_mode: bool):
     env = context.current_env()
     if not confirm_all:
         response = click.confirm(_sso_disclaimer)
@@ -36,7 +37,10 @@ def login_sso(show_token: bool, one_time: bool, confirm_all: bool):
     click.echo('Logging in to [{0}]...'.format(env.name))
 
     try:
-        token = auth.login_sso(env.api_url)
+        if dettached_mode:
+            token = auth.login_sso_dettached(env.api_url)
+        else:
+            token = auth.login_sso(env.api_url)
     except Exception as ex:
         click.echo(crayons.red(str(ex)), err=True)
         exit(1)

@@ -3,7 +3,9 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib import parse
 
+import click
 import requests
+from click import Abort
 
 from modcli import __version__
 
@@ -26,6 +28,19 @@ def get_open_port():
     port = s.getsockname()[1]
     s.close()
     return port
+
+
+def login_sso_dettached(url: str):
+    click.echo('Running in dettached mode...')
+    click.echo('1) Open this url in any browser: {0}'.format('{0}/users/tokens_sso'.format(url)))
+    click.echo('2) The URL will automatically redirect to MOD Forum (https://forum.moddevices.com)')
+    click.echo('3) Once MOD Forum page loads, if asked, enter your credentials or register a new user')
+    click.echo('4) A JWT token will be displayed in your browser')
+    try:
+        token = click.prompt('Copy the token value and paste it here, then press ENTER')
+        return token.strip()
+    except Abort:
+        exit(1)
 
 
 def login_sso(api_url: str):
@@ -54,7 +69,7 @@ def login_sso(api_url: str):
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             content = '''
-            <html><head><title>Success</title></head>
+            <html><head><title>modcli - success</title></head>
             <body>Authentication successful! This browser window can be closed.</body></html>
             '''
             return bytes(content, 'UTF-8')
