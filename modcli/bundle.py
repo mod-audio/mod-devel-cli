@@ -32,6 +32,7 @@ def publish(project_file: str, packages_path: str, bundle_url: str, keep_environ
     if keep_environment:
         process['keep_environment'] = True
     buildroot_pkg = process.pop('buildroot_pkg', None)
+    mk_filename = '{0}.mk'.format(buildroot_pkg)
     if not buildroot_pkg:
         raise Exception('Missing buildroot_pkg in project file')
     if bundles:
@@ -40,9 +41,13 @@ def publish(project_file: str, packages_path: str, bundle_url: str, keep_environ
             raise Exception('Could not match any bundle from: {0}'.format(bundles))
 
     # find buildroot_pkg under packages_path
-    pkg_path = next((i for i in os.walk(packages_path) if buildroot_pkg in i[1]), None)
-    if not pkg_path:
-        raise Exception('Could not find package {0} in {1}'.format(buildroot_pkg, packages_path))
+    mk_path = next((i[0] for i in os.walk(packages_path) if mk_filename in i[2]), None)
+    if not mk_path:
+        raise Exception('Could not find buildroot mk file for package {0} in {1}'.format(buildroot_pkg, packages_path))
+    basename = os.path.basename(mk_path)
+    if basename != buildroot_pkg:
+        raise Exception('The package folder containing the .mk file has to be named {0}'.format(buildroot_pkg))
+    pkg_path = os.path.dirname(mk_path)
 
     work_dir = tempfile.mkdtemp()
     try:
@@ -50,7 +55,7 @@ def publish(project_file: str, packages_path: str, bundle_url: str, keep_environ
         source_path = os.path.join(work_dir, package)
         try:
             subprocess.check_output(
-                ['tar', 'zhcf', source_path, buildroot_pkg], stderr=subprocess.STDOUT, cwd=os.path.join(pkg_path[0])
+                ['tar', 'zhcf', source_path, buildroot_pkg], stderr=subprocess.STDOUT, cwd=os.path.join(pkg_path)
             )
         except subprocess.CalledProcessError as ex:
             raise Exception(ex.output.decode())
