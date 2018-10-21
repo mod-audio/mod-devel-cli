@@ -146,11 +146,12 @@ def status():
 
 @click.command(help='Publish LV2 bundles, where PROJECT_FILE points to the buildroot project descriptor file (JSON)')
 @click.argument('project_file')
-@click.option('-p', '--packages_path', type=str, help='Path to buildroot package')
-def publish(project_file: str, packages_path: str):
+@click.option('-p', '--packages-path', type=str, help='Path to buildroot package')
+@click.option('-s', '--show-result', type=bool, help='Print pipeline process result', is_flag=True)
+def publish(project_file: str, packages_path: str, show_result: bool):
     try:
         env = context.current_env()
-        bundle.publish(project_file, packages_path, env.bundle_url)
+        bundle.publish(project_file, packages_path, env.bundle_url, show_result=show_result)
     except Exception as ex:
         click.echo(crayons.red(str(ex)), err=True)
         exit(1)

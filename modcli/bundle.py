@@ -12,7 +12,10 @@ from modcli import context
 from modcli.utils import read_json_file
 
 
-def publish(project_file: str, packages_path: str, bundle_url: str, keep_environment: bool=False, bundles: list=None):
+def publish(project_file: str, packages_path: str, bundle_url: str, keep_environment: bool=False, bundles: list=None,
+            show_result: bool=False):
+    project_file = os.path.realpath(project_file)
+    packages_path = os.path.realpath(packages_path) if packages_path else None
     token = context.active_token()
     if not token:
         raise Exception('You must authenticate first')
@@ -86,13 +89,15 @@ def publish(project_file: str, packages_path: str, bundle_url: str, keep_environ
         else:
             raise Exception('Checksum mismatch: {0} <> {1}'.format(checksum, result_checksum))
     finally:
-        click.echo('Cleaning up ...')
+        click.echo('Cleaning up...')
         shutil.rmtree(work_dir, ignore_errors=True)
 
     release_process_url = release_process['href']
-    click.echo('Retrieving release process from {0} ...'.format(release_process_url))
-    release_process_full = requests.get('{0}?pretty=true'.format(release_process_url)).text
+    click.echo(crayons.blue('Process url: {0}?pretty=true'.format(release_process_url)))
     click.echo(crayons.green('Done'))
-    click.echo(crayons.blue('================ Release Process {0} ================'.format(release_process['id'])))
-    click.echo(release_process_full)
-    click.echo(crayons.blue('================ End Release Process ================'))
+    if show_result:
+        click.echo('Retrieving release process from {0} ...'.format(release_process_url))
+        release_process_full = requests.get('{0}?pretty=true'.format(release_process_url)).text
+        click.echo(crayons.blue('================ Release Process {0} ================'.format(release_process['id'])))
+        click.echo(release_process_full)
+        click.echo(crayons.blue('================ End Release Process ================'))
