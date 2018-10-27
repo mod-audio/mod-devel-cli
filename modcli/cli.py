@@ -28,7 +28,10 @@ def bundle_group():
 @click.option('-o', '--one-time', type=bool, help='Only print token once (do not store it)', is_flag=True)
 @click.option('-y', '--confirm-all', type=bool, help='Confirm all operations', is_flag=True)
 @click.option('-d', '--detached-mode', type=bool, help='Run process without opening a local browser', is_flag=True)
-def login_sso(show_token: bool, one_time: bool, confirm_all: bool, detached_mode: bool):
+@click.option('-e', '--env_name', type=str, help='Switch to environment before authenticating')
+def login_sso(show_token: bool, one_time: bool, confirm_all: bool, detached_mode: bool, env_name: str):
+    if env_name:
+        context.set_active_env(env_name)
     env = context.current_env()
     if not confirm_all:
         response = click.confirm(_sso_disclaimer)
@@ -61,7 +64,10 @@ def login_sso(show_token: bool, one_time: bool, confirm_all: bool, detached_mode
 @click.option('-p', '--password', type=str, prompt=True, hide_input=True, help='User password')
 @click.option('-s', '--show-token', type=bool, help='Print the JWT token obtained', is_flag=True)
 @click.option('-o', '--one-time', type=bool, help='Only print token once (do not store it)', is_flag=True)
-def login(username: str, password: str, show_token: bool, one_time: bool):
+@click.option('-e', '--env_name', type=str, help='Switch to environment before authenticating')
+def login(username: str, password: str, show_token: bool, one_time: bool, env_name: str):
+    if env_name:
+        context.set_active_env(env_name)
     env = context.current_env()
     click.echo('Logging in to [{0}]...'.format(env.name))
     try:
@@ -93,7 +99,10 @@ def clear_context():
 
 
 @click.command(help='Show current active access JWT token')
-def active_token():
+@click.option('-e', '--env_name', type=str, help='Show current active token from a specific environment')
+def active_token(env_name: str):
+    if env_name:
+        context.set_active_env(env_name)
     token = context.active_token()
     if not token:
         click.echo(crayons.red('You must authenticate first.'), err=True)
