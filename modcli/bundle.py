@@ -69,7 +69,9 @@ def publish(project_file: str, packages_path: str, bundle_url: str, keep_environ
         headers = {'Authorization': 'MOD {0}'.format(token)}
 
         result = requests.post('{0}/'.format(bundle_url), json=process, headers=headers)
-        if result.status_code != 200:
+        if result.status_code == 401:
+            raise Exception('Invalid token - please authenticate (see \'modcli auth\')')
+        elif result.status_code != 200:
             raise Exception('Error: {0}'.format(result.text))
         release_process = result.json()
 
@@ -79,7 +81,9 @@ def publish(project_file: str, packages_path: str, bundle_url: str, keep_environ
             data = fh.read()
         headers = {'Content-Type': 'application/octet-stream'}
         result = requests.post(release_process['source-href'], data=data, headers=headers)
-        if result.status_code != 201:
+        if result.status_code == 401:
+            raise Exception('Invalid token - please authenticate (see \'modcli auth\')')
+        elif result.status_code != 201:
             raise Exception('Error: {0}'.format(result.text))
         checksum = result.text.lstrip('"').rstrip('"')
 
