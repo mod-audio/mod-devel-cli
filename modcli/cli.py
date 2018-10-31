@@ -37,7 +37,8 @@ def login_sso(show_token: bool, one_time: bool, confirm_all: bool, detached_mode
         response = click.confirm(_sso_disclaimer)
         if not response:
             exit(1)
-    click.echo('Logging in to [{0}]...'.format(env.name))
+    if not one_time:
+        click.echo('Logging in to [{0}]...'.format(env.name))
 
     try:
         if detached_mode:
@@ -69,7 +70,8 @@ def login(username: str, password: str, show_token: bool, one_time: bool, env_na
     if env_name:
         context.set_active_env(env_name)
     env = context.current_env()
-    click.echo('Logging in to [{0}]...'.format(env.name))
+    if not one_time:
+        click.echo('Logging in to [{0}]...'.format(env.name))
     try:
         token = auth.login(username, password, env.api_url)
     except Exception as ex:
