@@ -159,10 +159,12 @@ def status():
 @click.argument('project_file')
 @click.option('-p', '--packages-path', type=str, help='Path to buildroot package')
 @click.option('-s', '--show-result', type=bool, help='Print pipeline process result', is_flag=True)
-def publish(project_file: str, packages_path: str, show_result: bool):
+@click.option('-k', '--keep-environment', type=bool, help='Don\'t remove build environment after build', is_flag=True)
+def publish(project_file: str, packages_path: str, show_result: bool, keep_environment: bool):
     try:
         env = context.current_env()
-        bundle.publish(project_file, packages_path, env.bundle_url, show_result=show_result)
+        bundle.publish(project_file, packages_path, env.bundle_url,
+                       show_result=show_result, keep_environment=keep_environment)
     except Exception as ex:
         click.echo(crayons.red(str(ex)), err=True)
         exit(1)
