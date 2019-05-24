@@ -23,6 +23,11 @@ def bundle_group():
     pass
 
 
+@click.group(name='config', help='Configuration commands')
+def config_group():
+    pass
+
+
 @click.command(help='Authenticate user with SSO (MOD Forum)')
 @click.option('-s', '--show-token', type=bool, help='Print the JWT token obtained', is_flag=True)
 @click.option('-o', '--one-time', type=bool, help='Only print token once (do not store it)', is_flag=True)
@@ -147,8 +152,8 @@ def add_env(env_name: str, api_url: str, bundle_url: str):
     click.echo(crayons.green('Environment [{0}] added and set as active'.format(env_name)))
 
 
-@click.command(help='Display context status')
-def status():
+@click.command(help='List current configuration', name='list')
+def list_config():
     env = context.current_env()
     click.echo('Active environment: {0}'.format(env.name))
     click.echo('Authenticated in [{0}]: {1}'.format(env.name, 'Yes' if env.token else 'False'))
@@ -175,12 +180,13 @@ auth_group.add_command(active_token)
 auth_group.add_command(login)
 auth_group.add_command(login_sso)
 bundle_group.add_command(publish)
+config_group.add_command(add_env)
+config_group.add_command(set_active_env)
+config_group.add_command(list_config)
+config_group.add_command(clear_context)
 main.add_command(auth_group)
 main.add_command(bundle_group)
-main.add_command(add_env)
-main.add_command(set_active_env)
-main.add_command(status)
-main.add_command(clear_context)
+main.add_command(config_group)
 
 
 if __name__ == '__main__':
