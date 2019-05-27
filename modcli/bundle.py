@@ -13,7 +13,7 @@ from modcli.utils import read_json_file
 
 
 def publish(project_file: str, packages_path: str, bundle_url: str, keep_environment: bool=False, bundles: list=None,
-            show_result: bool=False):
+            show_result: bool=False, rebuild: bool=False):
     project_file = os.path.realpath(project_file)
     packages_path = os.path.realpath(packages_path) if packages_path else None
     token = context.active_token()
@@ -34,6 +34,7 @@ def publish(project_file: str, packages_path: str, bundle_url: str, keep_environ
     # setting up process data
     if keep_environment:
         process['keep_environment'] = True
+    process['rebuild'] = rebuild
     buildroot_pkg = process.pop('buildroot_pkg', None)
     mk_filename = '{0}.mk'.format(buildroot_pkg)
     if not buildroot_pkg:

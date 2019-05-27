@@ -165,11 +165,12 @@ def list_config():
 @click.option('-p', '--packages-path', type=str, help='Path to buildroot package')
 @click.option('-s', '--show-result', type=bool, help='Print pipeline process result', is_flag=True)
 @click.option('-k', '--keep-environment', type=bool, help='Don\'t remove build environment after build', is_flag=True)
-def publish(project_file: str, packages_path: str, show_result: bool, keep_environment: bool):
+@click.option('-r', '--rebuild', type=bool, help='Don\'t increment release number, just rebuild', is_flag=True)
+def publish(project_file: str, packages_path: str, show_result: bool, keep_environment: bool, rebuild: bool):
     try:
         env = context.current_env()
         bundle.publish(project_file, packages_path, env.bundle_url,
-                       show_result=show_result, keep_environment=keep_environment)
+                       show_result=show_result, keep_environment=keep_environment, rebuild=rebuild)
     except Exception as ex:
         click.echo(crayons.red(str(ex)), err=True)
         exit(1)
