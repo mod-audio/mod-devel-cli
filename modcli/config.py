@@ -106,6 +106,12 @@ class CliContext(object):
             raise Exception('Not environment has been set')
         return self.environments[self._active_env]
 
+    def get_env(self, env_name: str=None):
+        if not env_name:
+            return self.current_env()
+        self._ensure_env(env_name)
+        return self.environments[env_name]
+
     def save(self):
         data = {
             'active_env': self._active_env,
@@ -128,6 +134,7 @@ class CliContext(object):
     def clear(self):
         _remove_file(os.path.join(self._path, CliContext._filename))
         _remove_file(os.path.join(self._path, CliContext._access_token_filename))
+        self.environments.clear()
 
 
 class EnvSettings(object):

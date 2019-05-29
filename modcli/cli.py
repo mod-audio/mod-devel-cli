@@ -166,11 +166,11 @@ def list_config():
 @click.option('-s', '--show-result', type=bool, help='Print pipeline process result', is_flag=True)
 @click.option('-k', '--keep-environment', type=bool, help='Don\'t remove build environment after build', is_flag=True)
 @click.option('-r', '--rebuild', type=bool, help='Don\'t increment release number, just rebuild', is_flag=True)
-def publish(project_file: str, packages_path: str, show_result: bool, keep_environment: bool, rebuild: bool):
+@click.option('-e', '--env', type=str, help='Environment where the bundles will be published')
+def publish(project_file: str, packages_path: str, show_result: bool, keep_environment: bool, rebuild: bool, env: str):
     try:
-        env = context.current_env()
-        bundle.publish(project_file, packages_path, env.bundle_url,
-                       show_result=show_result, keep_environment=keep_environment, rebuild=rebuild)
+        bundle.publish(project_file, packages_path, show_result=show_result,
+                       keep_environment=keep_environment, rebuild=rebuild, env_name=env)
     except Exception as ex:
         click.echo(crayons.red(str(ex)), err=True)
         exit(1)

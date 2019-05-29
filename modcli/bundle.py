@@ -12,12 +12,13 @@ from modcli import context
 from modcli.utils import read_json_file
 
 
-def publish(project_file: str, packages_path: str, bundle_url: str, keep_environment: bool=False, bundles: list=None,
-            show_result: bool=False, rebuild: bool=False):
+def publish(project_file: str, packages_path: str, keep_environment: bool=False, bundles: list=None,
+            show_result: bool=False, rebuild: bool=False, env_name: str=None):
     project_file = os.path.realpath(project_file)
     packages_path = os.path.realpath(packages_path) if packages_path else None
-    token = context.active_token()
-    if not token:
+
+    env = context.get_env(env_name)
+    if not env.token:
         raise Exception('You must authenticate first')
 
     if not os.path.isfile(project_file):
@@ -28,6 +29,10 @@ def publish(project_file: str, packages_path: str, bundle_url: str, keep_environ
             raise Exception('Packages path {0} not found'.format(packages_path))
     else:
         packages_path = os.path.dirname(project_file)
+
+    project = os.path.split(project_file)[1]
+    if not click.confirm('Project {0} will be compiled and published in [{1}], do you confirm?'.format(project, env.name)):
+        raise Exception('Cancelled')
 
     process = read_json_file(project_file)
 
@@ -65,11 +70,11 @@ def publish(project_file: str, packages_path: str, bundle_url: str, keep_environ
             raise Exception(ex.output.decode())
 
         click.echo('Submitting release process for project {0} using file {1}'.format(project_file, package))
-        click.echo('URL: {0}'.format(bundle_url))
+        click.echo('URL: {0}'.format(env.bundle_url))
 
-        headers = {'Authorization': 'MOD {0}'.format(token)}
+        headers = {'Authorization': 'MOD {0}'.format(env.token)}
 
-        result = requests.post('{0}/'.format(bundle_url), json=process, headers=headers)
+        result = requests.post('{0}/'.format(env.bundle_url), json=process, headers=headers)
         if result.status_code == 401:
             raise Exception('Invalid token - please authenticate (see \'modcli auth\')')
         elif result.status_code != 200:
