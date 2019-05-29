@@ -167,10 +167,12 @@ def list_config():
 @click.option('-k', '--keep-environment', type=bool, help='Don\'t remove build environment after build', is_flag=True)
 @click.option('-r', '--rebuild', type=bool, help='Don\'t increment release number, just rebuild', is_flag=True)
 @click.option('-e', '--env', type=str, help='Environment where the bundles will be published')
-def publish(project_file: str, packages_path: str, show_result: bool, keep_environment: bool, rebuild: bool, env: str):
+@click.option('-f', '--force', type=bool, help='Don\'t ask for confirmation', is_flag=True)
+def publish(project_file: str, packages_path: str, show_result: bool, keep_environment: bool,
+            rebuild: bool, env: str, force: bool):
     try:
         bundle.publish(project_file, packages_path, show_result=show_result,
-                       keep_environment=keep_environment, rebuild=rebuild, env_name=env)
+                       keep_environment=keep_environment, rebuild=rebuild, env_name=env, force=force)
     except Exception as ex:
         click.echo(crayons.red(str(ex)), err=True)
         exit(1)
