@@ -31,8 +31,8 @@ def publish(project_file: str, packages_path: str, keep_environment: bool=False,
         packages_path = os.path.dirname(project_file)
 
     project = os.path.split(project_file)[1]
-    if not force and not click.confirm('Project {0} will be compiled and published in '
-                                       '[{1}], do you confirm?'.format(project, env.name)):
+    if not force and not click.confirm('Project {0} will be compiled and published in [{1}], '
+                                       'do you confirm?'.format(crayons.green(project), crayons.green(env.name))):
         raise Exception('Cancelled')
 
     process = read_json_file(project_file)
