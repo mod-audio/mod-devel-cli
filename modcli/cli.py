@@ -156,7 +156,7 @@ def add_env(env_name: str, api_url: str, bundle_url: str):
 def list_config():
     env = context.current_env()
     click.echo('Active environment: {0}'.format(env.name))
-    click.echo('Authenticated in [{0}]: {1}'.format(env.name, 'Yes' if env.token else 'False'))
+    click.echo('Authenticated in [{0}]: {1}'.format(env.name, 'Yes' if env.token else 'No'))
     click.echo('Registered environments: {0}'.format(list(context.environments.keys())))
 
 
