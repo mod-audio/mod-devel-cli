@@ -34,7 +34,8 @@ def config_group():
 @click.option('-y', '--confirm-all', type=bool, help='Confirm all operations', is_flag=True)
 @click.option('-d', '--detached-mode', type=bool, help='Run process without opening a local browser', is_flag=True)
 @click.option('-e', '--env_name', type=str, help='Switch to environment before authenticating')
-def login_sso(show_token: bool, one_time: bool, confirm_all: bool, detached_mode: bool, env_name: str):
+@click.option('-m', '--mock-user', type=str, help='For a local testing environment, create a token for this user, using MOD_JWT_SECRET and MOD_JWT_ISSUER environment variables. Use "changeme" as defaults.')
+def login_sso(show_token: bool, one_time: bool, confirm_all: bool, detached_mode: bool, env_name: str, mock_user: bool):
     if env_name:
         context.set_active_env(env_name)
     env = context.current_env()
@@ -46,7 +47,9 @@ def login_sso(show_token: bool, one_time: bool, confirm_all: bool, detached_mode
         click.echo('Logging in to [{0}]...'.format(env.name))
 
     try:
-        if detached_mode:
+        if mock_user:
+            token = auth.get_development_token(mock_user)
+        elif detached_mode:
             token = auth.login_sso_detached(env.api_url)
         else:
             token = auth.login_sso(env.api_url)

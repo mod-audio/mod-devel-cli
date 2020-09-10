@@ -1,5 +1,8 @@
+import os
 import socket
+import datetime
 import webbrowser
+import jwt
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib import parse
 
@@ -91,3 +94,16 @@ def login_sso(api_url: str):
     if not token:
         raise Exception('Authentication failed!')
     return token
+
+def get_development_token(user_id):
+    payload = {
+        'iat': datetime.datetime.utcnow(),
+        #'access_id': access_id,
+        'user_id': user_id,
+        'iss': os.getenv('MOD_JWT_ISSUER', 'changeme'),
+        'auth': ['bundle:add:process'],
+        #'version': __version__,
+    }
+    #headers = {'iid': settings.JWT_ISSUER_ID} if settings.JWT_ISSUER_ID else None
+    access_token = jwt.encode(payload, os.getenv('MOD_JWT_SECRET', 'changeme'), 'HS256')
+    return access_token.decode()
