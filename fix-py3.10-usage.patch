@@ -1,0 +1,74 @@
+# patch -p1 -i $(pwd)/fix-py3.10-usage.patch -d ~/.local/lib/python3.10/site-packages
+diff --git a/requests/cookies.py b/requests/cookies.py
+index ab3c88b..054d814 100644
+--- a/requests/cookies.py
++++ b/requests/cookies.py
+@@ -169,7 +169,7 @@ class CookieConflictError(RuntimeError):
+     """
+ 
+ 
+-class RequestsCookieJar(cookielib.CookieJar, collections.MutableMapping):
++class RequestsCookieJar(cookielib.CookieJar, collections.abc.MutableMapping):
+     """Compatibility class; is a cookielib.CookieJar, but exposes a dict
+     interface.
+ 
+diff --git a/requests/sessions.py b/requests/sessions.py
+index 6570e73..dad00f3 100644
+--- a/requests/sessions.py
++++ b/requests/sessions.py
+@@ -10,7 +10,7 @@ requests (cookies, auth, proxies).
+ import os
+ import platform
+ import time
+-from collections import Mapping
++from collections.abc import Mapping
+ from datetime import timedelta
+ 
+ from .auth import _basic_auth_str
+diff --git a/requests/structures.py b/requests/structures.py
+index 05d2b3f..06dfc62 100644
+--- a/requests/structures.py
++++ b/requests/structures.py
+@@ -12,7 +12,7 @@ import collections
+ from .compat import OrderedDict
+ 
+ 
+-class CaseInsensitiveDict(collections.MutableMapping):
++class CaseInsensitiveDict(collections.abc.MutableMapping):
+     """A case-insensitive ``dict``-like object.
+ 
+     Implements all methods and operations of
+@@ -71,7 +71,7 @@ class CaseInsensitiveDict(collections.MutableMapping):
+         )
+ 
+     def __eq__(self, other):
+-        if isinstance(other, collections.Mapping):
++        if isinstance(other, collections.abc.Mapping):
+             other = CaseInsensitiveDict(other)
+         else:
+             return NotImplemented
+diff --git a/urllib3/_collections.py b/urllib3/_collections.py
+index 5df2372..45a0bb0 100644
+--- a/urllib3/_collections.py
++++ b/urllib3/_collections.py
+@@ -1,5 +1,5 @@
+ from __future__ import absolute_import
+-from collections import Mapping, MutableMapping
++from collections.abc import Mapping, MutableMapping
+ try:
+     from threading import RLock
+ except ImportError:  # Platform-specific: No threads available
+diff --git a/urllib3/util/selectors.py b/urllib3/util/selectors.py
+index d75cb26..71d17ef 100644
+--- a/urllib3/util/selectors.py
++++ b/urllib3/util/selectors.py
+@@ -11,7 +11,8 @@ import select
+ import socket
+ import sys
+ import time
+-from collections import namedtuple, Mapping
++from collections import namedtuple
++from collections.abc import Mapping
+ 
+ try:
+     monotonic = time.monotonic
