@@ -20,7 +20,7 @@ setup(
     install_requires=[
         'click==6.7',
         'crayons==0.1.2',
-        'requests==2.18.4',
+        'requests>=2.18.4',
     ],
     packages=[
         'modcli',
