@@ -1,0 +1,56 @@
+name: Cross-platform CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-22.04, macos-latest, macos-15-intel, windows-latest]
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+
+      - name: Verify installed version matches source
+        run: |
+          python -c "
+          import re
+          from importlib.metadata import version
+          with open('pyproject.toml') as f:
+              match = re.search(r'version\s*=\s*[\"'']([^\"'']+)[\"'']', f.read())
+          expected = match.group(1)
+          installed = version('mod-devel-cli')
+          print(f'Expected: {expected}')
+          print(f'Installed: {installed}')
+          assert expected == installed, f'Version mismatch: {expected} != {installed}'
+          "
+        shell: bash
+
+      - name: Test CLI help
+        run: modcli --help
+
+      - name: Test auth commands
+        run: modcli auth --help
+
+      - name: Test bundle commands
+        run: modcli bundle --help
+
+      - name: Test config commands
+        run: modcli config --help
