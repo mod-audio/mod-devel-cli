@@ -19,12 +19,12 @@ def local_url(port: int):
     return f'http://localhost:{port}'
 
 
-def receive_token(port: int, timeout: int, state: str = None):
+def receive_token(port: int, timeout: int, state: str):
     '''Return (token, source) for the first token received, either from the
-    browser redirect to http://localhost:{port} (carrying the expected state,
-    when given), source 'browser', or typed into stdin, source 'paste'.
-    (None, None) on timeout. Requests without a valid token (a browser's
-    favicon, a wrong state) are answered and ignored.'''
+    browser redirect to http://localhost:{port} carrying the expected state,
+    source 'browser', or typed into stdin, source 'paste'. (None, None) on
+    timeout. Requests without a valid token (a browser's favicon, a missing or
+    wrong state, e.g. a web page probing localhost) are answered and ignored.'''
     received = {}
     done = threading.Event()
 
@@ -42,7 +42,7 @@ def receive_token(port: int, timeout: int, state: str = None):
         def do_GET(self):
             query = parse.parse_qs(parse.urlsplit(self.path).query)
             token = query.get('token', [None])[0]
-            if token and (state is None or query.get('state', [None])[0] == state):
+            if token and query.get('state', [None])[0] == state:
                 accept(token, 'browser')
                 self._respond(200, pages.signed_in())
             else:

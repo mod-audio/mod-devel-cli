@@ -53,10 +53,10 @@ def _open_browser(url: str):
 
 
 def _start_sso(api_url: str, local_url: str):
+    state = secrets.token_urlsafe(16)
     click.echo('Sign in with your MOD Forum account (https://forum.mod.audio); an existing browser session is used.')
-    _open_browser(auth.sso_url(api_url, local_url))
-    # Discourse redirects without a state
-    return None
+    _open_browser(auth.sso_url(api_url, local_url, state))
+    return state
 
 
 def _start_google(api_url: str, local_url: str):
@@ -76,6 +76,7 @@ def _start_magiclink(email: str):
 
 
 def _receive_token(api_url: str, timeout: int, start):
+    # start() kicks off the sign-in and returns the state the redirect must carry back
     port = token_receiver.get_open_port()
     state = start(api_url, token_receiver.local_url(port))
     click.echo('If the browser can\'t reach this machine, paste the token it shows and press ENTER: ', nl=False)

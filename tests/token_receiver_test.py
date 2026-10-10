@@ -52,10 +52,6 @@ class ReceiveTokenTest(TestCase):
         self.assertEqual(result, ('good', 'browser'))
         self.assertEqual(statuses, [400, 400, 400, 400, 200])
 
-    def test_no_state_check_without_state(self):
-        result, _ = self._receive(['/?token=good'], state=None)
-        self.assertEqual(result, ('good', 'browser'))
-
     def test_pasted_token(self):
         result, _ = self._receive([], pasted='  pasted-token \n')
         self.assertEqual(result, ('pasted-token', 'paste'))

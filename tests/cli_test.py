@@ -18,11 +18,18 @@ class BrowserLoginTest(TestCase):
 
     def setUp(self):
         self.opened = []
+        self.sent_states = []
+        self.expected_states = []
         self.received = (TOKEN, 'browser')
+
+        def receive_token(port, timeout, state):
+            self.expected_states.append(state)
+            return self.received
+
         patches = [
             patch('webbrowser.open', self.opened.append),
-            patch('modcli.token_receiver.receive_token', lambda port, timeout, state: self.received),
-            patch('modcli.auth.send_magic_link', lambda *args: None),
+            patch('modcli.token_receiver.receive_token', receive_token),
+            patch('modcli.auth.send_magic_link', lambda api_url, email, local_url, state: self.sent_states.append(state)),
         ]
         for p in patches:
             p.start()
@@ -35,6 +42,15 @@ class BrowserLoginTest(TestCase):
                 self.assertEqual(result.exit_code, 0, result.output)
                 self.assertIn(f'You\'re now logged in as [{TokenHelper.USER_ID}]', result.output)
                 self.assertEqual(context.active_token(), TOKEN)
+
+    def test_login_requires_the_state_it_sent(self):
+        for command, args in BROWSER_LOGINS:
+            with self.subTest(command=command.name):
+                CliRunner().invoke(command, args)
+                state = self.expected_states[-1]
+                self.assertTrue(state)
+                sent = self.sent_states[-1] if command is cli.login_magiclink else self.opened[-1]
+                self.assertIn(state, sent)
 
     def test_login_opens_the_sign_in_url(self):
         CliRunner().invoke(cli.login_google, [])

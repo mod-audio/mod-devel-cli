@@ -28,7 +28,9 @@ class LoginTest(TestCase):
 class BrowserLoginUrlsTest(TestCase):
 
     def test_sso_url(self):
-        self.assertEqual(auth.sso_url(API, LOCAL_URL), f'{API}/users/tokens_sso?local_url={LOCAL_URL}')
+        base, query = auth.sso_url(API, LOCAL_URL, 'nonce').split('?')
+        self.assertEqual(base, f'{API}/users/tokens_sso')
+        self.assertEqual(parse.parse_qs(query), {'local_url': [LOCAL_URL], 'state': ['nonce']})
 
     def test_google_url(self):
         base, query = auth.google_url(API, LOCAL_URL, 'nonce').split('?')
