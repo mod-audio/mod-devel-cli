@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mod-devel-cli"
-version = "2.0.0"
+version = "2.1.0"
 description = "MOD Command Line Interface"
 authors = [
     {name = "Alex Cunha", email = "alex@mod.audio"}
@@ -28,11 +28,19 @@ classifiers = [
 [project.urls]
 Homepage = "https://mod.audio/"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pylint>=3.0",
+    "pytest>=8.0",
 ]
 
 [project.scripts]
 modcli = "modcli.cli:main"
+
+[tool.setuptools.package-data]
+modcli = ["*.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["*_test.py"]
 

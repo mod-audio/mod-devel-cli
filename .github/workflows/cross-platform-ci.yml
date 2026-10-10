@@ -54,3 +54,41 @@ jobs:
 
       - name: Test config commands
         run: modcli config --help
+
+      # Outside the checkout, so modcli is imported from the installed package, which must ship sign_in.html
+      - name: Test sign-in page ships
+        working-directory: ${{ runner.temp }}
+        run: python -c "from modcli import pages; pages.signed_in()"
+
+      - name: Run tests
+        run: |
+          pip install pytest
+          pytest
+
+  uv-install:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-22.04, macos-latest, macos-15-intel, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install with uv
+        run: uv tool install .
+
+      - name: Test CLI help
+        run: modcli --help
+
+      - name: Test auth commands
+        run: modcli auth --help
+
+      - name: Test bundle commands
+        run: modcli bundle --help
+
+      - name: Test config commands
+        run: modcli config --help
