@@ -79,7 +79,7 @@ def _receive_token(api_url: str, timeout: int, start):
     # start() kicks off the sign-in and returns the state the redirect must carry back
     port = token_receiver.get_open_port()
     state = start(api_url, token_receiver.local_url(port))
-    click.echo('If the browser can\'t reach this machine, paste the token it shows and press ENTER: ', nl=False)
+    click.echo('Finish in the browser, or paste the token it shows here and press ENTER: ', nl=False)
     token, source = token_receiver.receive_token(port, timeout, state)
     if source != 'paste':
         click.echo()
