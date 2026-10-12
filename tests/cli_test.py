@@ -87,3 +87,8 @@ class SetTokenTest(TestCase):
         env = config.EnvSettings('test', 'https://api', 'https://bundle')
         env.set_token(TokenHelper.generate_token(user_id))
         self.assertEqual(env.username, user_id)
+
+    def test_set_token_reads_sub_and_exp(self):
+        env = config.EnvSettings('test', 'https://api', 'https://bundle')
+        env.set_token(TokenHelper.generate_token('dev@partner.com', exp=2000000000, aud='api', holder='person'))
+        self.assertEqual((env.username, env.exp), ('dev@partner.com', 2000000000))
