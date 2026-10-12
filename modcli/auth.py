@@ -15,9 +15,9 @@ def login(username: str, password: str, api_url: str):
     return result.json()['message'].strip()
 
 
-def sso_url(api_url: str, local_url: str, state: str):
+def forum_url(api_url: str, local_url: str, state: str):
     query = parse.urlencode({'local_url': local_url, 'state': state})
-    return f'{api_url}/users/tokens_sso?{query}'
+    return f'{api_url}/users/tokens_modforum?{query}'
 
 
 def google_url(api_url: str, local_url: str, state: str):

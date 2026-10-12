@@ -8,6 +8,7 @@ from tests.helpers import TokenHelper
 
 TOKEN = TokenHelper.generate_token(exp=2000000000, aud='api')
 BROWSER_LOGINS = [
+    (cli.login_forum, []),
     (cli.login_sso, []),
     (cli.login_google, []),
     (cli.login_magiclink, ['--email', TokenHelper.USER_ID]),

@@ -8,7 +8,7 @@ from importlib.metadata import version
 from modcli import context, auth, bundle, token_receiver
 
 # seconds to wait for the token, per browser login
-_SSO_TIMEOUT = 5 * 60
+_FORUM_TIMEOUT = 5 * 60
 _GOOGLE_TIMEOUT = 5 * 60
 _MAGICLINK_TIMEOUT = 15 * 60
 
@@ -52,10 +52,10 @@ def _open_browser(url: str):
     webbrowser.open(url)
 
 
-def _start_sso(api_url: str, local_url: str):
+def _start_forum(api_url: str, local_url: str):
     state = secrets.token_urlsafe(16)
     click.echo('Sign in with your MOD Forum account (https://forum.mod.audio); an existing browser session is used.')
-    _open_browser(auth.sso_url(api_url, local_url, state))
+    _open_browser(auth.forum_url(api_url, local_url, state))
     return state
 
 
@@ -124,10 +124,17 @@ def _browser_login_options(command):
     return command
 
 
-@click.command(help='Authenticate user with SSO (MOD Forum)')
+@click.command(help='Authenticate user with a MOD Forum account')
+@_browser_login_options
+def login_forum(show_token: bool, one_time: bool, env_name: str):
+    _browser_login(env_name, show_token, one_time, _FORUM_TIMEOUT, _start_forum)
+
+
+# The command's former name, kept for scripts
+@click.command(name='login-sso', hidden=True, help='Same as login-forum')
 @_browser_login_options
 def login_sso(show_token: bool, one_time: bool, env_name: str):
-    _browser_login(env_name, show_token, one_time, _SSO_TIMEOUT, _start_sso)
+    _browser_login(env_name, show_token, one_time, _FORUM_TIMEOUT, _start_forum)
 
 
 @click.command(help='Authenticate user with Google')
@@ -260,6 +267,7 @@ def publish(project_file: str, packages_path: str, show_result: bool, keep_envir
 
 auth_group.add_command(active_token)
 auth_group.add_command(login)
+auth_group.add_command(login_forum)
 auth_group.add_command(login_sso)
 auth_group.add_command(login_google)
 auth_group.add_command(login_magiclink)
