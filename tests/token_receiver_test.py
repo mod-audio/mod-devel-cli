@@ -9,8 +9,9 @@ from modcli import pages, token_receiver
 
 
 def _get(port: int, path: str) -> int:
+    # 127.0.0.1, not localhost: Windows tries ::1 first and spends ~2s on each refused connection
     try:
-        with urllib.request.urlopen(f'http://localhost:{port}{path}') as response:
+        with urllib.request.urlopen(f'http://127.0.0.1:{port}{path}') as response:
             return response.status
     except HTTPError as e:
         return e.code
