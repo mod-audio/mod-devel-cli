@@ -31,7 +31,7 @@ Commands:
 ```
 uv sync                                # install with the dev group (pylint, pytest)
 uv run pytest                          # run the tests
-uv run pylint --errors-only modcli     # lint
+uv run pylint --errors-only modcli tests   # lint
 ```
 
 ## Authentication
