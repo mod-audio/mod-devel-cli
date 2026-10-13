@@ -5,7 +5,7 @@ from importlib.metadata import version
 
 from modcli import context, auth, bundle
 
-_sso_disclaimer = '''SSO login requires you have a valid account in MOD Forum (https://forum.moddevices.com).
+_sso_disclaimer = '''SSO login requires you have a valid account in MOD Forum (https://forum.mod.audio).
 If your browser has an active session the credentials will be used for this login. Confirm?'''
 
 

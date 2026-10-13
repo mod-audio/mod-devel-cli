@@ -33,7 +33,7 @@ def get_open_port():
 def login_sso_detached(api_url: str):
     click.echo('Running in detached mode...')
     click.echo(f'1) Open this url in any browser: {api_url}/users/tokens_sso')
-    click.echo('2) The URL will automatically redirect to MOD Forum (https://forum.moddevices.com)')
+    click.echo('2) The URL will automatically redirect to MOD Forum (https://forum.mod.audio)')
     click.echo('3) Once MOD Forum page loads, if asked, enter your credentials or register a new user')
     click.echo('4) A JWT token will be displayed in your browser')
     try:
