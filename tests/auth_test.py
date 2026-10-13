@@ -41,9 +41,9 @@ class BrowserLoginUrlsTest(TestCase):
 class MagicLinkTest(TestCase):
 
     def test_send_magic_link(self):
-        post = FakePost(body='{"success": true}')
+        post = FakePost(body='{"success": true, "expires_in": 900}')
         with patch('modcli.http.post', post):
-            auth.send_magic_link(API, 'a@b.c', LOCAL_URL, 'nonce')
+            self.assertEqual(auth.send_magic_link(API, 'a@b.c', LOCAL_URL, 'nonce'), 900)
         self.assertEqual(post.calls, [(f'{API}/users/tokens_magiclink', {
             'email': 'a@b.c', 'aud': 'api', 'local_url': LOCAL_URL, 'state': 'nonce',
         })])

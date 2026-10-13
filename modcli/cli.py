@@ -7,10 +7,9 @@ from importlib.metadata import version
 
 from modcli import context, auth, bundle, token_receiver
 
-# seconds to wait for the token, per browser login
+# seconds to wait for the token from the browser; a magic link's wait is the link's validity, from the API
 _FORUM_TIMEOUT = 5 * 60
 _GOOGLE_TIMEOUT = 5 * 60
-_MAGICLINK_TIMEOUT = 15 * 60
 
 # -y no longer does anything; kept so existing scripts passing it keep working
 _ignored_confirm_all = click.option('-y', '--confirm-all', is_flag=True, hidden=True, expose_value=False)
@@ -56,29 +55,29 @@ def _start_forum(api_url: str, local_url: str):
     state = secrets.token_urlsafe(16)
     click.echo('Sign in with your MOD Forum account (https://forum.mod.audio); an existing browser session is used.')
     _open_browser(auth.forum_url(api_url, local_url, state))
-    return state
+    return state, _FORUM_TIMEOUT
 
 
 def _start_google(api_url: str, local_url: str):
     state = secrets.token_urlsafe(16)
     _open_browser(auth.google_url(api_url, local_url, state))
-    return state
+    return state, _GOOGLE_TIMEOUT
 
 
 def _start_magiclink(email: str):
     def start(api_url: str, local_url: str):
         state = secrets.token_urlsafe(16)
-        auth.send_magic_link(api_url, email, local_url, state)
+        expires_in = auth.send_magic_link(api_url, email, local_url, state)
         click.echo(f'A sign-in link was sent to {email}. Open it and confirm.')
         click.echo('No email? Only one link is sent per minute, so wait a minute before trying again.')
-        return state
+        return state, expires_in
     return start
 
 
-def _receive_token(api_url: str, timeout: int, start):
-    # start() kicks off the sign-in and returns the state the redirect must carry back
+def _receive_token(api_url: str, start):
+    # start() kicks off the sign-in and returns the state the redirect must carry back, and how long to wait
     port = token_receiver.get_open_port()
-    state = start(api_url, token_receiver.local_url(port))
+    state, timeout = start(api_url, token_receiver.local_url(port))
     click.echo('Finish in the browser, or paste the token it shows here and press ENTER: ', nl=False)
     token, source = token_receiver.receive_token(port, timeout, state)
     if source != 'paste':
@@ -88,7 +87,7 @@ def _receive_token(api_url: str, timeout: int, start):
     return token
 
 
-def _browser_login(env_name: str, show_token: bool, one_time: bool, timeout: int, start):
+def _browser_login(env_name: str, show_token: bool, one_time: bool, start):
     if env_name:
         context.set_active_env(env_name)
     env = context.current_env()
@@ -96,7 +95,7 @@ def _browser_login(env_name: str, show_token: bool, one_time: bool, timeout: int
         click.echo(f'Logging in to [{env.name}]...')
 
     try:
-        token = _receive_token(env.api_url, timeout, start)
+        token = _receive_token(env.api_url, start)
     except Exception as ex:
         click.echo(click.style(str(ex), fg='red'), err=True)
         sys.exit(1)
@@ -127,27 +126,27 @@ def _browser_login_options(command):
 @click.command(help='Authenticate user with a MOD Forum account')
 @_browser_login_options
 def login_forum(show_token: bool, one_time: bool, env_name: str):
-    _browser_login(env_name, show_token, one_time, _FORUM_TIMEOUT, _start_forum)
+    _browser_login(env_name, show_token, one_time, _start_forum)
 
 
 # The command's former name, kept for scripts
 @click.command(name='login-sso', hidden=True, help='Same as login-forum')
 @_browser_login_options
 def login_sso(show_token: bool, one_time: bool, env_name: str):
-    _browser_login(env_name, show_token, one_time, _FORUM_TIMEOUT, _start_forum)
+    _browser_login(env_name, show_token, one_time, _start_forum)
 
 
 @click.command(help='Authenticate user with Google')
 @_browser_login_options
 def login_google(show_token: bool, one_time: bool, env_name: str):
-    _browser_login(env_name, show_token, one_time, _GOOGLE_TIMEOUT, _start_google)
+    _browser_login(env_name, show_token, one_time, _start_google)
 
 
 @click.command(help='Authenticate user with a sign-in link sent by email')
 @click.option('--email', type=str, prompt=True, help='Email address of the user')
 @_browser_login_options
 def login_magiclink(email: str, show_token: bool, one_time: bool, env_name: str):
-    _browser_login(env_name, show_token, one_time, _MAGICLINK_TIMEOUT, _start_magiclink(email))
+    _browser_login(env_name, show_token, one_time, _start_magiclink(email))
 
 
 @click.command(help='Authenticate user')

@@ -22,15 +22,21 @@ class BrowserLoginTest(TestCase):
         self.sent_states = []
         self.expected_states = []
         self.received = (TOKEN, 'browser')
+        self.timeouts = []
 
         def receive_token(port, timeout, state):
             self.expected_states.append(state)
+            self.timeouts.append(timeout)
             return self.received
+
+        def send_magic_link(api_url, email, local_url, state):
+            self.sent_states.append(state)
+            return 900
 
         patches = [
             patch('webbrowser.open', self.opened.append),
             patch('modcli.token_receiver.receive_token', receive_token),
-            patch('modcli.auth.send_magic_link', lambda api_url, email, local_url, state: self.sent_states.append(state)),
+            patch('modcli.auth.send_magic_link', send_magic_link),
         ]
         for p in patches:
             p.start()
@@ -57,6 +63,10 @@ class BrowserLoginTest(TestCase):
         CliRunner().invoke(cli.login_google, [])
         self.assertEqual(len(self.opened), 1)
         self.assertIn('aud=api', self.opened[0])
+
+    def test_magiclink_waits_as_long_as_the_link_lives(self):
+        CliRunner().invoke(cli.login_magiclink, ['--email', TokenHelper.USER_ID])
+        self.assertEqual(self.timeouts[-1], 900)
 
     def test_one_time_prints_token_only(self):
         result = CliRunner().invoke(cli.login_google, ['-o'])

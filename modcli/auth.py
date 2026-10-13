@@ -25,7 +25,8 @@ def google_url(api_url: str, local_url: str, state: str):
     return f'{api_url}/users/tokens_google?{query}'
 
 
-def send_magic_link(api_url: str, email: str, local_url: str, state: str):
+def send_magic_link(api_url: str, email: str, local_url: str, state: str) -> int:
+    '''Returns how long the link lives, in seconds.'''
     result = http.post(f'{api_url}/users/tokens_magiclink', json_data={
         'email': email,
         'aud': 'api',
@@ -34,3 +35,4 @@ def send_magic_link(api_url: str, email: str, local_url: str, state: str):
     })
     if result.status_code != 200:
         raise Exception(f'Error: {result.json()["error-message"]}')
+    return result.json()['expires_in']
