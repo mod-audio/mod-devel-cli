@@ -149,8 +149,8 @@ class EnvSettings(object):
 
     def set_token(self, token: str):
         _, payload, _ = token.split('.')
-        payload_data = json.loads(base64.b64decode(payload + '===').decode())
-        username = payload_data['user_id']
+        payload_data = json.loads(base64.urlsafe_b64decode(payload + '===').decode())
+        username = payload_data['sub']
         exp = payload_data.get('exp', None)
 
         self.username = username

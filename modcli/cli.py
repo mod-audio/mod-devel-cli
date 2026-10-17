@@ -1,12 +1,18 @@
+import secrets
 import sys
+import webbrowser
 
 import click
 from importlib.metadata import version
 
-from modcli import context, auth, bundle
+from modcli import context, auth, bundle, token_receiver
 
-_sso_disclaimer = '''SSO login requires you have a valid account in MOD Forum (https://forum.mod.audio).
-If your browser has an active session the credentials will be used for this login. Confirm?'''
+# seconds to wait for the token from the browser; a magic link's wait is the link's validity, from the API
+_FORUM_TIMEOUT = 5 * 60
+_GOOGLE_TIMEOUT = 5 * 60
+
+# -y no longer does anything; kept so existing scripts passing it keep working
+_ignored_confirm_all = click.option('-y', '--confirm-all', is_flag=True, hidden=True, expose_value=False)
 
 
 def _normalize_command_name(name):
@@ -39,28 +45,57 @@ def config_group():
     pass
 
 
-@click.command(help='Authenticate user with SSO (MOD Forum)')
-@click.option('-s', '--show-token', type=bool, help='Print the JWT token obtained', is_flag=True)
-@click.option('-o', '--one-time', type=bool, help='Only print token once (do not store it)', is_flag=True)
-@click.option('-y', '--confirm-all', type=bool, help='Confirm all operations', is_flag=True)
-@click.option('-d', '--detached-mode', type=bool, help='Run process without opening a local browser', is_flag=True)
-@click.option('-e', '--env-name', type=str, help='Switch to environment before authenticating')
-def login_sso(show_token: bool, one_time: bool, confirm_all: bool, detached_mode: bool, env_name: str):
+def _open_browser(url: str):
+    click.echo('Sign in in the browser. If it doesn\'t open, visit:')
+    click.echo(url)
+    webbrowser.open(url)
+
+
+def _start_forum(api_url: str, local_url: str):
+    state = secrets.token_urlsafe(16)
+    click.echo('Sign in with your MOD Forum account (https://forum.mod.audio); an existing browser session is used.')
+    _open_browser(auth.forum_url(api_url, local_url, state))
+    return state, _FORUM_TIMEOUT
+
+
+def _start_google(api_url: str, local_url: str):
+    state = secrets.token_urlsafe(16)
+    _open_browser(auth.google_url(api_url, local_url, state))
+    return state, _GOOGLE_TIMEOUT
+
+
+def _start_magiclink(email: str):
+    def start(api_url: str, local_url: str):
+        state = secrets.token_urlsafe(16)
+        expires_in = auth.send_magic_link(api_url, email, local_url, state)
+        click.echo(f'A sign-in link was sent to {email}. Open it and confirm.')
+        click.echo('No email? Only one link is sent per minute, so wait a minute before trying again.')
+        return state, expires_in
+    return start
+
+
+def _receive_token(api_url: str, start):
+    # start() kicks off the sign-in and returns the state the redirect must carry back, and how long to wait
+    port = token_receiver.get_open_port()
+    state, timeout = start(api_url, token_receiver.local_url(port))
+    click.echo('Finish in the browser, or paste the token it shows here and press ENTER: ', nl=False)
+    token, source = token_receiver.receive_token(port, timeout, state)
+    if source != 'paste':
+        click.echo()
+    if not token:
+        raise Exception('Authentication failed!')
+    return token
+
+
+def _browser_login(env_name: str, show_token: bool, one_time: bool, start):
     if env_name:
         context.set_active_env(env_name)
     env = context.current_env()
-    if not confirm_all:
-        response = click.confirm(_sso_disclaimer)
-        if not response:
-            sys.exit(1)
     if not one_time:
         click.echo(f'Logging in to [{env.name}]...')
 
     try:
-        if detached_mode:
-            token = auth.login_sso_detached(env.api_url)
-        else:
-            token = auth.login_sso(env.api_url)
+        token = _receive_token(env.api_url, start)
     except Exception as ex:
         click.echo(click.style(str(ex), fg='red'), err=True)
         sys.exit(1)
@@ -76,12 +111,51 @@ def login_sso(show_token: bool, one_time: bool, confirm_all: bool, detached_mode
         click.echo(click.style(f'You\'re now logged in as [{env.username}] in [{env.name}].', fg='green'))
 
 
+def _browser_login_options(command):
+    options = [
+        click.option('-s', '--show-token', type=bool, help='Print the JWT token obtained', is_flag=True),
+        click.option('-o', '--one-time', type=bool, help='Only print token once (do not store it)', is_flag=True),
+        click.option('-e', '--env-name', type=str, help='Switch to environment before authenticating'),
+        _ignored_confirm_all,
+    ]
+    for option in reversed(options):
+        command = option(command)
+    return command
+
+
+@click.command(help='Authenticate user with a MOD Forum account')
+@_browser_login_options
+def login_forum(show_token: bool, one_time: bool, env_name: str):
+    _browser_login(env_name, show_token, one_time, _start_forum)
+
+
+# The command's former name, kept for scripts
+@click.command(name='login-sso', hidden=True, help='Same as login-forum')
+@_browser_login_options
+def login_sso(show_token: bool, one_time: bool, env_name: str):
+    _browser_login(env_name, show_token, one_time, _start_forum)
+
+
+@click.command(help='Authenticate user with Google')
+@_browser_login_options
+def login_google(show_token: bool, one_time: bool, env_name: str):
+    _browser_login(env_name, show_token, one_time, _start_google)
+
+
+@click.command(help='Authenticate user with a sign-in link sent by email')
+@click.option('--email', type=str, prompt=True, help='Email address of the user')
+@_browser_login_options
+def login_magiclink(email: str, show_token: bool, one_time: bool, env_name: str):
+    _browser_login(env_name, show_token, one_time, _start_magiclink(email))
+
+
 @click.command(help='Authenticate user')
 @click.option('-u', '--username', type=str, prompt=True, help='User ID')
 @click.option('-p', '--password', type=str, prompt=True, hide_input=True, help='User password')
 @click.option('-s', '--show-token', type=bool, help='Print the JWT token obtained', is_flag=True)
 @click.option('-o', '--one-time', type=bool, help='Only print token once (do not store it)', is_flag=True)
 @click.option('-e', '--env-name', type=str, help='Switch to environment before authenticating')
+@_ignored_confirm_all
 def login(username: str, password: str, show_token: bool, one_time: bool, env_name: str):
     if env_name:
         context.set_active_env(env_name)
@@ -192,7 +266,10 @@ def publish(project_file: str, packages_path: str, show_result: bool, keep_envir
 
 auth_group.add_command(active_token)
 auth_group.add_command(login)
+auth_group.add_command(login_forum)
 auth_group.add_command(login_sso)
+auth_group.add_command(login_google)
+auth_group.add_command(login_magiclink)
 bundle_group.add_command(publish)
 config_group.add_command(add_env)
 config_group.add_command(set_active_env)
