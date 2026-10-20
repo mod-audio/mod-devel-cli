@@ -1,3 +1,4 @@
+import os
 import secrets
 import sys
 import webbrowser
@@ -48,7 +49,16 @@ def config_group():
 def _open_browser(url: str):
     click.echo('Sign in in the browser. If it doesn\'t open, visit:')
     click.echo(url)
-    webbrowser.open(url)
+    # The browser inherits our stderr; its startup messages (GTK's) would land in the prompt
+    saved_stderr = os.dup(2)
+    devnull = os.open(os.devnull, os.O_WRONLY)
+    try:
+        os.dup2(devnull, 2)
+        webbrowser.open(url)
+    finally:
+        os.dup2(saved_stderr, 2)
+        os.close(saved_stderr)
+        os.close(devnull)
 
 
 def _start_forum(api_url: str, local_url: str):
