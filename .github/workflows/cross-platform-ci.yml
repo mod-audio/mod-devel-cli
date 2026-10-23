@@ -107,6 +107,33 @@ jobs:
           cp -r tests pyproject.toml "$RUNNER_TEMP/"
           cd "$RUNNER_TEMP" && uvx --with "$GITHUB_WORKSPACE" pytest
 
+  pipx-install:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest, macos-15-intel, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install with pipx
+        run: |
+          pipx install .
+          pipx environment --value PIPX_BIN_DIR >> "$GITHUB_PATH"
+
+      - name: Test CLI help
+        run: modcli --help
+
+      - name: Test auth commands
+        run: modcli auth --help
+
+      - name: Test bundle commands
+        run: modcli bundle --help
+
+      - name: Test config commands
+        run: modcli config --help
+
   # The oldest versions pyproject.toml allows (click>=8.0) on the oldest Python
   lowest-deps:
     runs-on: ubuntu-24.04
