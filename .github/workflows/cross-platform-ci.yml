@@ -10,6 +10,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 defaults:
   run:
     shell: bash
@@ -29,10 +32,10 @@ jobs:
           - {os: ubuntu-24.04, python-version: '3.13'}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -81,10 +84,10 @@ jobs:
         os: [ubuntu-24.04, macos-latest, macos-15-intel, windows-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Install with uv
         run: uv tool install .
@@ -115,7 +118,7 @@ jobs:
         os: [ubuntu-24.04, macos-latest, macos-15-intel, windows-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install with pipx
         run: |
@@ -138,10 +141,10 @@ jobs:
   lowest-deps:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Run tests
         run: uv run --resolution lowest-direct --python 3.10 pytest
@@ -149,10 +152,10 @@ jobs:
   lint:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Run pylint
         run: uv run pylint --errors-only modcli tests
