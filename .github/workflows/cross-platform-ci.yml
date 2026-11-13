@@ -87,7 +87,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v10
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Install with uv
         run: uv tool install .
@@ -144,7 +144,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v10
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Run tests
         run: uv run --resolution lowest-direct --python 3.10 pytest
@@ -155,7 +155,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v10
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Run pylint
         run: uv run pylint --errors-only modcli tests
