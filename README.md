@@ -7,9 +7,29 @@ Using pip:
     pip install --upgrade pip
     pip install git+https://github.com/mod-audio/mod-devel-cli
 
+Using pipx:
+
+    pipx install git+https://github.com/mod-audio/mod-devel-cli
+
 Using uv:
 
     uv tool install git+https://github.com/mod-audio/mod-devel-cli
+
+## Upgrading
+
+Using pip:
+
+    pip install --upgrade git+https://github.com/mod-audio/mod-devel-cli
+
+Using pipx:
+
+    pipx upgrade mod-devel-cli
+
+Using uv:
+
+    uv tool upgrade mod-devel-cli
+
+Upgrading keeps the environments saved in `~/.config/modcli`. To get a new version's default environment, add it with `modcli config add-env`.
 
 ## Usage
 
