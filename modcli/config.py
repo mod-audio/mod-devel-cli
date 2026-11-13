@@ -11,10 +11,14 @@ from modcli.utils import read_json_file
 
 def read_context():
     context = CliContext.read(settings.CONFIG_DIR)
-    if len(context.environments) == 0:
-        for env_name, urls in settings.URLS.items():
-            context.add_env(env_name, urls[0], urls[1])
+    first_run = not context.environments
+    # add default environments a newer version brought, keeping the existing ones and their tokens
+    missing = {name: urls for name, urls in settings.URLS.items() if name not in context.environments}
+    for env_name, (api_url, bundle_url) in missing.items():
+        context.add_env(env_name, api_url, bundle_url)
+    if first_run:
         context.set_active_env(settings.DEFAULT_ENV)
+    if missing:
         context.save()
     return context
 
