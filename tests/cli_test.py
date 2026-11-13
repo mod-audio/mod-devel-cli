@@ -89,6 +89,27 @@ class ConfirmAllTest(TestCase):
                 self.assertNotIn('confirm_all', params)
 
 
+class ListConfigTest(TestCase):
+
+    def test_lists_every_env_token(self):
+        ctx = config.CliContext('unused')
+        ctx.add_env('dev', 'https://api-dev', 'https://bundle-dev')
+        ctx.add_env('prod', 'https://api', 'https://bundle')
+        ctx.add_env('staging', 'https://api-staging', 'https://bundle-staging')
+        ctx.set_active_env('prod')
+        ctx.environments['dev'].set_token(TokenHelper.generate_token('dev-user', exp=1))
+        ctx.environments['prod'].set_token(TokenHelper.generate_token('prod-user'))
+
+        with patch('modcli.cli.context', ctx):
+            result = CliRunner().invoke(cli.list_config)
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn('Active environment: prod\nAuthenticated in [prod]: Yes\n', result.output)
+        self.assertIn('  dev      dev-user (expired)\n', result.output)
+        self.assertIn('* prod     prod-user\n', result.output)
+        self.assertIn('  staging  not logged in\n', result.output)
+
+
 class SetTokenTest(TestCase):
 
     def test_set_token_decodes_base64url_payload(self):

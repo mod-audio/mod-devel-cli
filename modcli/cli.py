@@ -1,7 +1,9 @@
 import os
 import secrets
 import sys
+import time
 import webbrowser
+from datetime import datetime
 
 import click
 from importlib.metadata import version
@@ -253,6 +255,21 @@ def list_config():
     click.echo(f'Active environment: {env.name}')
     click.echo(f'Authenticated in [{env.name}]: {"Yes" if env.token else "No"}')
     click.echo(f'Registered environments: {list(context.environments.keys())}')
+    click.echo()
+    width = max(len(name) for name in context.environments)
+    for e in context.environments.values():
+        marker = '*' if e.name == env.name else ' '
+        click.echo(f'{marker} {e.name:<{width}}  {_token_status(e)}')
+
+
+def _token_status(env):
+    if not env.token:
+        return 'not logged in'
+    if not env.exp:
+        return env.username
+    if env.exp < time.time():
+        return f'{env.username} (expired)'
+    return f'{env.username} (expires {datetime.fromtimestamp(env.exp):%Y-%m-%d %H:%M})'
 
 
 @click.command(help='Publish LV2 bundles, where PROJECT_FILE points to the buildroot project descriptor file (JSON)')
