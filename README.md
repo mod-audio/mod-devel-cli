@@ -29,7 +29,7 @@ Using uv:
 
     uv tool upgrade mod-devel-cli
 
-Upgrading keeps the environments saved in `~/.config/modcli`. To get a new version's default environments, run `modcli config clear-context` (this also removes the stored tokens), or add a single one with `modcli config add-env`.
+Upgrading keeps the environments saved in `~/.config/modcli`. To get a new version's default environment, add it with `modcli config add-env`.
 
 ## Usage
 
