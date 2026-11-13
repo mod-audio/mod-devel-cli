@@ -32,7 +32,7 @@ Homepage = "https://mod.audio/"
 
 [dependency-groups]
 dev = [
-    "pylint>=3.0",
+    "pylint>=4.0.9",
     "pytest>=8.0",
 ]
 

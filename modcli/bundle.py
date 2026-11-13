@@ -92,7 +92,7 @@ def publish(project_file: str, packages_path: str, keep_environment: bool=False,
             raise Exception(f'Error: {result.text}')
         checksum = result.text.lstrip('"').rstrip('"')
 
-        result_checksum = md5(data).hexdigest()
+        result_checksum = md5(data, usedforsecurity=False).hexdigest()
         if checksum == result_checksum:
             click.echo('Checksum match ok!')
         else:
